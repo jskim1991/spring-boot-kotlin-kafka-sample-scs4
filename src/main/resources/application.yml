@@ -1,0 +1,18 @@
+spring:
+  cloud:
+    function:
+      definition: producerSupplier; consumer;
+    stream:
+      bindings:
+        producerSupplier-out-0:
+          destination: jay-topic
+        consumer-in-0:
+          destination: jay-topic
+          group: consumer-group
+      kafka:
+        bindings:
+          consumer-in-0:
+            consumer:
+              ackMode: MANUAL_IMMEDIATE
+
+
