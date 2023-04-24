@@ -16,6 +16,7 @@ import reactor.core.publisher.Sinks
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
+import java.util.function.Function
 
 @SpringBootApplication
 class Application
@@ -45,7 +46,6 @@ class ProducerConfig {
     fun producerSupplier(sinks: Sinks.Many<String>) = Supplier<Flux<String>> {
         sinks.asFlux()
     }
-
 }
 
 @Component
@@ -68,10 +68,33 @@ class EventConsumer {
     @Bean
     fun consumer() = Consumer<Message<String>> {
         val ack = it.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
-        println("EventConsumer::consume ${it.payload}")
+        println("EventConsumer::consume ${MyLogger.log(it)}")
         if (ack != null) {
             println("Acknowledgement provided for ${it.payload}")
             ack.acknowledge()
+        }
+    }
+}
+
+@Configuration
+class ProcessorConfig {
+}
+
+@Component
+class EventProcessor {
+    @Bean
+    fun processorFunction() = Function<Flux<Message<String>>, Flux<String>> {
+        it.map { message ->
+            println("EventProcessor::processorFunction ${MyLogger.log(message)}")
+            message.payload.uppercase()
+        }
+    }
+}
+
+class MyLogger {
+    companion object {
+        fun log(message: Message<String>) : String {
+            return "From: [${message.headers.get(KafkaHeaders.RECEIVED_TOPIC, String::class.java)}], Payload: [${message.payload}]"
         }
     }
 }

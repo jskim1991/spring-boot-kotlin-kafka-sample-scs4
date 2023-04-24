@@ -1,13 +1,19 @@
 spring:
   cloud:
     function:
-      definition: producerSupplier; consumer;
+      definition: producerSupplier; processorFunction; consumer;
     stream:
       bindings:
         producerSupplier-out-0:
-          destination: jay-topic
+          destination: intermediate-topic
+        processorFunction-in-0:
+          destination: intermediate-topic
+          group: consumer-group
+        processorFunction-out-0:
+          destination: final-topic
+          group: consumer-group
         consumer-in-0:
-          destination: jay-topic
+          destination: final-topic
           group: consumer-group
       kafka:
         bindings:
