@@ -14,8 +14,6 @@ import org.springframework.web.bind.annotation.RestController
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Sinks
 import java.util.*
-import java.util.function.Consumer
-import java.util.function.Supplier
 
 @SpringBootApplication
 class Application
@@ -41,9 +39,19 @@ class ProducerConfig {
         return Sinks.many().multicast().onBackpressureBuffer()
     }
 
+    /* Can be replaced to below */
+    /*
     @Bean
     fun producerSupplier(sinks: Sinks.Many<String>) = Supplier<Flux<String>> {
         sinks.asFlux()
+    }
+     */
+
+    @Bean
+    fun producerSupplier(sinks: Sinks.Many<String>): () -> Flux<String> {
+        return {
+            sinks.asFlux();
+        }
     }
 
 }
@@ -65,6 +73,8 @@ class ConsumerConfig {
 @Component
 class EventConsumer {
 
+    /* Can be replaced to below */
+    /*
     @Bean
     fun consumer() = Consumer<Message<String>> {
         val ack = it.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
@@ -72,6 +82,19 @@ class EventConsumer {
         if (ack != null) {
             println("Acknowledgement provided for ${it.payload}")
             ack.acknowledge()
+        }
+    }
+     */
+
+    @Bean
+    fun consumer(): (Message<String>) -> Unit {
+        return {
+            val ack = it.headers.get(KafkaHeaders.ACKNOWLEDGMENT, Acknowledgment::class.java)
+            println("EventConsumer::consume ${it.payload}")
+            if (ack != null) {
+                println("Acknowledgement provided for ${it.payload}")
+                ack.acknowledge()
+            }
         }
     }
 }
